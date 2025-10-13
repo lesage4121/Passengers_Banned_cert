@@ -1,0 +1,84 @@
+package com.PassBanned.API.Model;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "users")
+@EntityListeners(AuditingEntityListener.class)
+@Data
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false)
+    private String name;
+
+    @NotBlank
+    @Email
+    @Size(max = 100)
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotBlank
+    @Size(min = 6, max = 120)
+    @Column(nullable = false)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status = Status.ACTIVE;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<BannedPassenger> createdPassengers = new HashSet<>();
+
+    // Constructors
+    public User() {}
+
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
+
+
+    // Enums
+    public enum Role {
+        USER, ADMIN
+    }
+
+    public enum Status {
+        ACTIVE, INACTIVE
+    }
+}
