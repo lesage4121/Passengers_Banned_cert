@@ -142,7 +142,7 @@ public class SecurityConfig {
 
         // Autoriser les patterns (utile principalement en développement)
 
-        configuration.setAllowedOriginPatterns(List.of(frontendUrlOne, frontendUrlTwo));
+        configuration.setAllowedOrigins(List.of(frontendUrlOne, frontendUrlTwo));
 
         // Autoriser explicitement les origines de développement (exemples : Vite / Create React App)
         //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000"));
