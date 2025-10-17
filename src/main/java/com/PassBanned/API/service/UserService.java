@@ -99,6 +99,7 @@ public class UserService implements UserDetailsService {
         user.setRole(userDto.getRole());
         user.setStatus(userDto.getStatus());
         user.setAvatarUrl(userDto.getAvatarUrl());
+        user.setEmail(userDto.getEmail());
 
         if (password != null && !password.isBlank())
         {
