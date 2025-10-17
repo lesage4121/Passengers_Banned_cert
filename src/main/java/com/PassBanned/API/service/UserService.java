@@ -103,7 +103,7 @@ public class UserService implements UserDetailsService {
 
         if (password != null && !password.isBlank())
         {
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password));
         }
 
         User updatedUser = userRepository.save(user);
