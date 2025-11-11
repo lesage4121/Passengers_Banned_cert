@@ -58,7 +58,7 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(user);
 
             // Create sample banned passengers
-            createSamplePassengers(admin);
+            //createSamplePassengers(admin);
 
     }
 
