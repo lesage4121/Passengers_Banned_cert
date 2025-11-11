@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
         // Create default users if they don't exist
 
         // Admin user
-            User admin = new User();
+         /*  User admin = new User();
             admin.setName("Administrateur Asky");
             admin.setEmail("admin@asky.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
@@ -408,6 +408,6 @@ public class DataInitializer implements CommandLineRunner {
         passenger20.setCreatedBy(createdBy);
         passengerRepository.save(passenger20);
 
-
+*/
     }
 }
