@@ -33,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Create default users if they don't exist
 
-       /**     // Admin user
+        // Admin user
             User admin = new User();
             admin.setName("Administrateur Asky");
             admin.setEmail("admin@asky.com");
@@ -407,7 +407,7 @@ public class DataInitializer implements CommandLineRunner {
         passenger20.setStatus(BannedPassenger.Status.ACTIVE);
         passenger20.setCreatedBy(createdBy);
         passengerRepository.save(passenger20);
-**/
+
 
     }
 }
