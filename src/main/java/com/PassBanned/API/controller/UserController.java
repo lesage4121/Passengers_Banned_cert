@@ -49,6 +49,7 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
+
         try {
             UserDto userDto = new UserDto();
             userDto.setName(request.getName());
@@ -56,7 +57,7 @@ public class UserController {
             userDto.setRole(User.Role.valueOf(request.getRole().toUpperCase()));
             userDto.setStatus(User.Status.valueOf(request.getStatus().toUpperCase()));
             userDto.setAvatarUrl(request.getAvatarUrl());
-
+            userDto.setMfaEnabled(request.isMfaEnabled());
             String password = request.getPassword();
             UserDto createdUser = userService.createUser(userDto, password);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
@@ -75,7 +76,7 @@ public class UserController {
             userDto.setRole(User.Role.valueOf(request.getRole().toUpperCase()));
             userDto.setStatus(User.Status.valueOf(request.getStatus().toUpperCase()));
             userDto.setAvatarUrl(request.getAvatarurl());
-
+            userDto.setMfaEnabled(request.isMfaEnabled());
             UserDto updatedUser = userService.updateUser(id, userDto, request.getPassword());
             return ResponseEntity.ok(updatedUser);
         } catch (Exception e) {
@@ -88,7 +89,6 @@ public class UserController {
             @PathVariable Long id, 
             @RequestParam("avatar") MultipartFile file) {
         try {
-            // Valider le fichier
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Fichier vide"));
             }
@@ -101,19 +101,14 @@ public class UserController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Le fichier ne doit pas dépasser 5MB"));
             }
 
-            // Récupérer l'utilisateur
             UserDto user = userService.getUserById(id)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            // Supprimer l'ancien avatar s'il existe
             if (user.getAvatarUrl() != null) {
                 storageService.deleteAvatar(user.getAvatarUrl());
             }
 
-            // Upload du nouvel avatar
             String avatarUrl = storageService.uploadAvatar(file, id.toString());
-
-            // Mettre à jour l'utilisateur
             user.setAvatarUrl(avatarUrl);
             userService.updateUser(id, user,null);
 
@@ -128,7 +123,6 @@ public class UserController {
     public ResponseEntity<Map<String, String>> uploadAvatarForNewUser(
             @RequestParam("avatar") MultipartFile file) {
         try {
-            // Valider le fichier
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Fichier vide"));
             }
@@ -140,8 +134,6 @@ public class UserController {
             if (file.getSize() > 5 * 1024 * 1024) { // 5MB
                 return ResponseEntity.badRequest().body(Map.of("error", "Le fichier ne doit pas dépasser 5MB"));
             }
-
-            // Upload de l'avatar avec un nom unique
             String avatarUrl = storageService.uploadAvatarForNewUser(file);
 
             return ResponseEntity.ok(Map.of("avatarUrl", avatarUrl));
@@ -183,5 +175,26 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @PostMapping("/{id}/enable-mfa")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> enableMfa(@PathVariable Long id) {
+       String url =  userService.enableMfa(id);
+        return ResponseEntity.ok(Map.of("otpAuthUrl", url));
+    }
+
+    @PostMapping("/{id}/disable-mfa")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> disableMfa(@PathVariable Long id){
+        userService.disableMfa(id);
+        return ResponseEntity.ok(Map.of("status","ok" ));
+    }
+
+    @PostMapping("/{id}/reset-mfa")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> resetMFA(@PathVariable Long id){
+        userService.resetMfa(id);
+        return ResponseEntity.ok(Map.of("status","ok"));
     }
 }

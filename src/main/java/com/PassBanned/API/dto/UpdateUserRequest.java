@@ -25,4 +25,6 @@ public class UpdateUserRequest {
 
     private String avatarurl;
 
+    private boolean mfaEnabled;
+
 }

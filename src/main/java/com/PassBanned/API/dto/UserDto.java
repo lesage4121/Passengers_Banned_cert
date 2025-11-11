@@ -2,12 +2,15 @@ package com.PassBanned.API.dto;
 
 
 import com.PassBanned.API.Model.User;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
+@ToString
 public class UserDto {
     private Long id;
     
@@ -26,6 +29,9 @@ public class UserDto {
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean mfaEnabled ;
+    private boolean mfaConfigured;
+    private String mfaSecret;
 
     // Constructors
     public UserDto() {}
@@ -57,4 +63,28 @@ public class UserDto {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isMfaEnabled() {
+        return mfaEnabled;
+    }
+
+    public void setMfaEnabled(boolean mfaEnabled) {
+        this.mfaEnabled = mfaEnabled;
+    }
+
+    public boolean isMfaConfigured() {
+        return mfaConfigured;
+    }
+
+    public void setMfaConfigured(boolean mfaConfigured) {
+        this.mfaConfigured = mfaConfigured;
+    }
+
+    public String getMfaSecret() {
+        return mfaSecret;
+    }
+
+    public void setMfaSecret(String mfaSecret) {
+        this.mfaSecret = mfaSecret;
+    }
 }

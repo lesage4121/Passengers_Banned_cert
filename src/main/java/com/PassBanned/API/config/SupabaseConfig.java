@@ -23,7 +23,7 @@ public class SupabaseConfig {
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
         return builder
-                .baseUrl(supabaseUrl) // 🔗 Définit l'URL de base (ton projet Supabase)
+                .baseUrl(supabaseUrl)
                 .defaultHeader("Authorization", "Bearer " + supabaseKey) // 🔑 Auth
                 .defaultHeader("apikey", supabaseKey) // 🔑 Obligatoire pour Supabase
                 .build();

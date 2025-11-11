@@ -22,7 +22,7 @@ public class DashboardController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         Map<String, Object> stats = Map.of(
-            "passengers", Map.of(
+             "passengers", Map.of(
                 "total", passengerService.getTotalPassengers(),
                 "active", passengerService.getActiveBans(),
                 "critical", passengerService.getCriticalCases(),

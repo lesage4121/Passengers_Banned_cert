@@ -5,6 +5,7 @@ import com.PassBanned.API.Model.BannedPassenger;
 import com.PassBanned.API.Model.User;
 import com.PassBanned.API.repository.BannedPassengerRepository;
 import com.PassBanned.API.repository.UserRepository;
+import com.PassBanned.API.service.MFAService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,11 +26,14 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private MFAService mfaService;
+
     @Override
     public void run(String... args) throws Exception {
         // Create default users if they don't exist
 
-            // Admin user
+       /**     // Admin user
             User admin = new User();
             admin.setName("Administrateur Asky");
             admin.setEmail("admin@asky.com");
@@ -38,6 +42,8 @@ public class DataInitializer implements CommandLineRunner {
             admin.setStatus(User.Status.ACTIVE);
             admin.setAvatarUrl("https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1");
             admin.setLastLogin(LocalDateTime.now());
+            admin.setMfaEnabled(true);
+            admin.setMfaSecret(mfaService.generateSecret(admin));
             userRepository.save(admin);
 
             // Regular user
@@ -401,7 +407,7 @@ public class DataInitializer implements CommandLineRunner {
         passenger20.setStatus(BannedPassenger.Status.ACTIVE);
         passenger20.setCreatedBy(createdBy);
         passengerRepository.save(passenger20);
-
+**/
 
     }
 }

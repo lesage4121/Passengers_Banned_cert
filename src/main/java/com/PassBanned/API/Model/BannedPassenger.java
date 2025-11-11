@@ -39,7 +39,7 @@ public class BannedPassenger {
     private String lastName;
 
     @NotBlank
-    @Email // Vérifie que c’est bien un email
+    @Email
     @Size(max = 100)
     @Column(nullable = false)
     private String email;
@@ -51,7 +51,7 @@ public class BannedPassenger {
 
     @NotBlank
     @Size(max = 20)
-    @Column(name = "passport_number", nullable = false, unique = true) // Unique = pas de doublons
+    @Column(name = "passport_number", nullable = false, unique = true)
     private String passportNumber;
 
     @NotBlank
@@ -63,7 +63,6 @@ public class BannedPassenger {
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
-    // ----- Infos sur le bannissement -----
     @NotBlank
     @Size(max = 1000)
     @Column(name = "ban_reason", nullable = false)
@@ -73,25 +72,25 @@ public class BannedPassenger {
     @Column(name = "ban_date", nullable = false)
     private LocalDate banDate;
 
-    @Enumerated(EnumType.STRING) // Sauvegarde l'énumération sous forme de texte
+    @Enumerated(EnumType.STRING)
     @Column(name = "ban_duration", nullable = false)
-    private BanDuration banDuration = BanDuration.TEMPORARY; // Valeur par défaut
+    private BanDuration banDuration = BanDuration.TEMPORARY;
 
-    @Column(name = "ban_end_date") // Peut être null si durée permanente
+    @Column(name = "ban_end_date")
     private LocalDate banEndDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Severity severity = Severity.MEDIUM; // Gravité par défaut
+    private Severity severity = Severity.MEDIUM;
 
-    @Column(columnDefinition = "TEXT") // Permet d’avoir un texte long
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
 
-    // ----- Relation avec l’utilisateur qui a créé l’enregistrement -----
+
     @ManyToOne(fetch = FetchType.LAZY) // Plusieurs passagers peuvent être créés par un même utilisateur
     @JoinColumn(name = "created_by_id", nullable = false) // Colonne clé étrangère
     private User createdBy;
@@ -106,23 +105,15 @@ public class BannedPassenger {
     private LocalDateTime updatedAt;
 
 
-
-    // ----- Getters et Setters -----
-    // (permettent d’accéder et de modifier les champs)
-
-
-    // ----- Énumérations internes -----
-    // Durée du bannissement
     public enum BanDuration {
         TEMPORARY, PERMANENT
     }
 
-    // Niveau de gravité
+
     public enum Severity {
         LOW, MEDIUM, HIGH, CRITICAL
     }
 
-    // État actuel du bannissement
     public enum Status {
         ACTIVE, EXPIRED, UNDER_REVIEW
     }

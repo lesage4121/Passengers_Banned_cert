@@ -5,6 +5,8 @@ import com.PassBanned.API.Model.User;
 import com.PassBanned.API.config.SecurityConfig;
 import com.PassBanned.API.dto.UserDto;
 import com.PassBanned.API.repository.UserRepository;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,88 +20,125 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service // Cette annotation indique que cette classe est un service Spring (composant métier)
-@Transactional // Assure que toutes les méthodes sont exécutées dans une transaction (rollback en cas d'erreur)
+@Service
+@Transactional
 public class UserService implements UserDetailsService {
-    // Implémente UserDetailsService pour l’authentification via Spring Security
-
     @Autowired
-    private UserRepository userRepository; // Injection du repository pour interagir avec la BDD
-
+    private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // 🔹 Méthode utilisée par Spring Security lors de la connexion
+
+
+
+    private final GoogleAuthenticator gAuth = new GoogleAuthenticator();
+
+    public String enableMfa(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        GoogleAuthenticatorKey key = gAuth.createCredentials();
+        user.setMfaSecret(key.getKey());
+        user.setMfaEnabled(true);
+        userRepository.save(user);
+
+        String otpAuthURL;
+
+        otpAuthURL = String.format("otpauth://totp/PassBanned:%s?secret=%s&issuer=PassBanned", user.getEmail(), key.getKey()
+        );
+        return otpAuthURL;
+    }
+
+    public void disableMfa(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setMfaEnabled(false);
+        user.setMfaConfigured(false);
+        user.setMfaSecret(null);
+        userRepository.save(user);
+    }
+
+    public void resetMfa(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        GoogleAuthenticatorKey key = gAuth.createCredentials();
+        user.setMfaSecret(key.getKey());
+        user.setMfaConfigured(false);
+        userRepository.save(user);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // On cherche l'utilisateur dans la BDD par son email
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-
         // On retourne un objet UserDetails que Spring Security peut utiliser pour l'authentification
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail()) // identifiant
-                .password(user.getPassword()) // mot de passe (déjà encodé)
-                .authorities("ROLE_" + user.getRole().name()) // rôle (converti en ROLE_ADMIN, ROLE_USER, etc.)
-                .accountExpired(false) // Compte jamais expiré
-                .accountLocked(user.getStatus() == User.Status.INACTIVE) // Si inactif, compte verrouillé
-                .credentialsExpired(false) // Les identifiants n’expirent pas
-                .disabled(user.getStatus() == User.Status.INACTIVE) // Si inactif → utilisateur désactivé
+                .username(user.getEmail())
+                .password(user.getPassword())
+                .authorities("ROLE_" + user.getRole().name())
+                .accountExpired(false)
+                .accountLocked(user.getStatus() == User.Status.INACTIVE)
+                .credentialsExpired(false)
+                .disabled(user.getStatus() == User.Status.INACTIVE)
                 .build();
     }
 
-    // 🔹 Récupérer la liste de tous les utilisateurs en DTO
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::convertToDto) // conversion User → UserDto
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    // 🔹 Récupérer un utilisateur par son ID
     public Optional<UserDto> getUserById(Long id) {
         return userRepository.findById(id)
                 .map(this::convertToDto);
     }
 
-    // 🔹 Récupérer un utilisateur par son email
     public Optional<UserDto> getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(this::convertToDto);
     }
 
-    // 🔹 Créer un nouvel utilisateur
     public UserDto createUser(UserDto userDto, String password) {
-        // Vérifier si l'email est déjà utilisé
         if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-
-        // Construire l'objet User à partir du DTO
         User user = new User();
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
-        user.setPassword(passwordEncoder.encode(password)); // mot de passe encodé
-        user.setRole(userDto.getRole() != null ? userDto.getRole() : User.Role.USER); // rôle par défaut USER
-        user.setStatus(userDto.getStatus() != null ? userDto.getStatus() : User.Status.ACTIVE); // statut par défaut ACTIF
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(userDto.getRole() != null ? userDto.getRole() : User.Role.USER);
+        user.setStatus(userDto.getStatus() != null ? userDto.getStatus() : User.Status.ACTIVE);
         user.setAvatarUrl(userDto.getAvatarUrl());
-
-        // Sauvegarde en BDD
+        if(userDto.isMfaEnabled()){
+            String secret = gAuth.createCredentials().getKey();
+            user.setMfaSecret(secret);
+            user.setMfaEnabled(true);
+        }
+        user.setMfaConfigured(false);
         User savedUser = userRepository.save(user);
-        return convertToDto(savedUser); // Retourner le DTO
+        return convertToDto(savedUser);
     }
 
-    // 🔹 Mise à jour d’un utilisateur
     public UserDto updateUser(Long id, UserDto userDto, String password) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Mise à jour des champs
         user.setName(userDto.getName());
         user.setRole(userDto.getRole());
         user.setStatus(userDto.getStatus());
         user.setAvatarUrl(userDto.getAvatarUrl());
         user.setEmail(userDto.getEmail());
+        user.setMfaEnabled(userDto.isMfaEnabled());
+        if(user.isMfaEnabled() && !userDto.isMfaEnabled())
+        {
+            user.setMfaEnabled(false);
+            user.setMfaSecret("");
+        } else if(!user.isMfaEnabled() && userDto.isMfaEnabled()) {
+            String secret = gAuth.createCredentials().getKey();
+            user.setMfaSecret(secret);
+            user.setMfaConfigured(false);
+        }
 
         if (password != null && !password.isBlank())
         {
@@ -110,7 +149,6 @@ public class UserService implements UserDetailsService {
         return convertToDto(updatedUser);
     }
 
-    // 🔹 Suppression d’un utilisateur par ID
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found");
@@ -118,7 +156,6 @@ public class UserService implements UserDetailsService {
         userRepository.deleteById(id);
     }
 
-    // 🔹 Mettre à jour la date du dernier login
     public void updateLastLogin(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setLastLogin(LocalDateTime.now());
@@ -126,17 +163,14 @@ public class UserService implements UserDetailsService {
         });
     }
 
-    // 🔹 Compter le nombre total d’utilisateurs
     public long getTotalUsers() {
         return userRepository.count();
     }
 
-    // 🔹 Compter uniquement les administrateurs
     public long getAdminCount() {
         return userRepository.countAdmins();
     }
 
-    // 🔹 Compter uniquement les utilisateurs actifs
     public long getActiveUserCount() {
         return userRepository.countActiveUsers();
     }
@@ -153,7 +187,6 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    // 🔹 Conversion d’un objet User en DTO (pour éviter d’exposer directement l’entité)
     private UserDto convertToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
@@ -165,6 +198,11 @@ public class UserService implements UserDetailsService {
         dto.setLastLogin(user.getLastLogin());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setMfaEnabled(user.isMfaEnabled());
+        dto.setMfaSecret(user.getMfaSecret());
+        dto.setMfaConfigured(user.isMfaConfigured());
         return dto;
     }
+
+
 }

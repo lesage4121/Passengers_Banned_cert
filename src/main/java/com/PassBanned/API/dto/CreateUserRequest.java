@@ -27,4 +27,6 @@ public class CreateUserRequest {
 
     private String avatarUrl;
 
+    private boolean mfaEnabled;
+
 }

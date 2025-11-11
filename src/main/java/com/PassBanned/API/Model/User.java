@@ -63,6 +63,17 @@ public class User {
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<BannedPassenger> createdPassengers = new HashSet<>();
 
+
+    @Column(name = "mfa_Enabled")
+    private boolean mfaEnabled = false;
+
+
+    @Column(name = "mfa_configured")
+    private boolean mfaConfigured = false;
+
+    @Column(name = "mfa_Secret")
+    private String mfaSecret;
+
     // Constructors
     public User() {}
 

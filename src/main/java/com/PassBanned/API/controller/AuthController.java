@@ -3,7 +3,9 @@ package com.PassBanned.API.controller;
 
 import com.PassBanned.API.dto.AuthRequest;
 import com.PassBanned.API.dto.AuthResponse;
+import com.PassBanned.API.dto.MFARequest;
 import com.PassBanned.API.service.AuthService;
+import com.PassBanned.API.service.MFAService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private MFAService mfaService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> authenticateUser(@Valid @RequestBody AuthRequest authRequest) {
@@ -39,6 +44,17 @@ public class AuthController {
             }
         }
         return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
+    }
+
+    @PostMapping("/mfa/verify")
+    public ResponseEntity<AuthResponse > verifyMFA (@RequestBody MFARequest mfaRequest) {
+         try {
+             AuthResponse response = mfaService.verifyCode(mfaRequest.getEmail(), mfaRequest.getCode());
+             return ResponseEntity.ok(response);
+         } catch (Exception e)
+             {
+                 return ResponseEntity.badRequest().build();
+              }
     }
 
 }
